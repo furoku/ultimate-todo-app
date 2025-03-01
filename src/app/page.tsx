@@ -1,4 +1,7 @@
-import TodoApp from "@/components/todo/todo-app";
+"use client";
+
+import { useState } from "react";
+import TodoApp, { TodoStatistics } from "@/components/todo/todo-app";
 import { ModeToggle } from "@/components/mode-toggle";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -7,6 +10,19 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function Home() {
+  const [statistics, setStatistics] = useState<TodoStatistics>({
+    total: 0,
+    completed: 0,
+    inProgress: 0,
+    upcoming: 0,
+    high: 0
+  });
+  const [currentTab, setCurrentTab] = useState<'all' | 'today' | 'important'>('all');
+
+  const handleStatisticsChange = (stats: TodoStatistics) => {
+    setStatistics(stats);
+  };
+
   return (
     <main className="min-h-screen p-4 md:p-8 lg:p-12 bg-gradient-to-br from-background to-background/80">
       <div className="container mx-auto">
@@ -38,7 +54,7 @@ export default function Home() {
               </div>
               <div>
                 <p className="text-sm text-blue-600 dark:text-blue-400 font-medium">総タスク数</p>
-                <p className="text-2xl font-bold text-blue-700 dark:text-blue-300">8</p>
+                <p className="text-2xl font-bold text-blue-700 dark:text-blue-300">{statistics.total}</p>
               </div>
             </CardContent>
           </Card>
@@ -50,7 +66,7 @@ export default function Home() {
               </div>
               <div>
                 <p className="text-sm text-green-600 dark:text-green-400 font-medium">完了済み</p>
-                <p className="text-2xl font-bold text-green-700 dark:text-green-300">3</p>
+                <p className="text-2xl font-bold text-green-700 dark:text-green-300">{statistics.completed}</p>
               </div>
             </CardContent>
           </Card>
@@ -62,7 +78,7 @@ export default function Home() {
               </div>
               <div>
                 <p className="text-sm text-amber-600 dark:text-amber-400 font-medium">進行中</p>
-                <p className="text-2xl font-bold text-amber-700 dark:text-amber-300">2</p>
+                <p className="text-2xl font-bold text-amber-700 dark:text-amber-300">{statistics.inProgress}</p>
               </div>
             </CardContent>
           </Card>
@@ -74,7 +90,7 @@ export default function Home() {
               </div>
               <div>
                 <p className="text-sm text-red-600 dark:text-red-400 font-medium">期限間近</p>
-                <p className="text-2xl font-bold text-red-700 dark:text-red-300">2</p>
+                <p className="text-2xl font-bold text-red-700 dark:text-red-300">{statistics.upcoming}</p>
               </div>
             </CardContent>
           </Card>
@@ -82,35 +98,50 @@ export default function Home() {
 
         {/* クイックアクセスセクション */}
         <div className="flex flex-wrap gap-2 mb-6 overflow-x-auto pb-2">
-          <Button variant="outline" className="bg-background/60 backdrop-blur-sm border border-border/50 rounded-full shadow-sm hover:shadow-md transition-all duration-200 flex items-center gap-2">
+          <Button 
+            variant="outline" 
+            className="bg-background/60 backdrop-blur-sm border border-border/50 rounded-full shadow-sm hover:shadow-md transition-all duration-200 flex items-center gap-2"
+            onClick={() => setCurrentTab('today')}
+          >
             <Clock className="h-4 w-4 text-primary" />
             今日のタスク
           </Button>
-          <Button variant="outline" className="bg-background/60 backdrop-blur-sm border border-border/50 rounded-full shadow-sm hover:shadow-md transition-all duration-200 flex items-center gap-2">
+          <Button 
+            variant="outline" 
+            className="bg-background/60 backdrop-blur-sm border border-border/50 rounded-full shadow-sm hover:shadow-md transition-all duration-200 flex items-center gap-2"
+            onClick={() => setCurrentTab('important')}
+          >
             <BarChart3 className="h-4 w-4 text-primary" />
             優先度が高いタスク
           </Button>
-          <Button variant="outline" className="bg-background/60 backdrop-blur-sm border border-border/50 rounded-full shadow-sm hover:shadow-md transition-all duration-200 flex items-center gap-2">
+          <Button 
+            variant="outline" 
+            className="bg-background/60 backdrop-blur-sm border border-border/50 rounded-full shadow-sm hover:shadow-md transition-all duration-200 flex items-center gap-2"
+          >
             <CalendarClock className="h-4 w-4 text-primary" />
             期限切れのタスク
           </Button>
         </div>
         
         {/* タスク表示セクション */}
-        <Tabs defaultValue="all" className="mb-6">
+        <Tabs 
+          value={currentTab} 
+          onValueChange={(value) => setCurrentTab(value as 'all' | 'today' | 'important')} 
+          className="mb-6"
+        >
           <TabsList className="grid grid-cols-3 md:w-[400px] mb-4 bg-background/60 backdrop-blur-sm">
             <TabsTrigger value="all" className="rounded-full">すべてのタスク</TabsTrigger>
             <TabsTrigger value="today" className="rounded-full">今日のタスク</TabsTrigger>
             <TabsTrigger value="important" className="rounded-full">重要なタスク</TabsTrigger>
           </TabsList>
           <TabsContent value="all" className="mt-0">
-            <TodoApp />
+            <TodoApp variant="all" onStatisticsChange={handleStatisticsChange} />
           </TabsContent>
           <TabsContent value="today" className="mt-0">
-            <TodoApp />
+            <TodoApp variant="today" onStatisticsChange={handleStatisticsChange} />
           </TabsContent>
           <TabsContent value="important" className="mt-0">
-            <TodoApp />
+            <TodoApp variant="important" onStatisticsChange={handleStatisticsChange} />
           </TabsContent>
         </Tabs>
       </div>
