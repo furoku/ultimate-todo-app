@@ -21,8 +21,22 @@ import {
   Search
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { addDays } from "date-fns";
 
-export default function TodoApp() {
+export interface TodoStatistics {
+  total: number;
+  completed: number;
+  inProgress: number;
+  upcoming: number;
+  high: number;
+}
+
+interface TodoAppProps {
+  variant?: 'all' | 'today' | 'important';
+  onStatisticsChange?: (stats: TodoStatistics) => void;
+}
+
+export default function TodoApp({ variant = 'all', onStatisticsChange }: TodoAppProps) {
   const [todos, setTodos] = useState<Todo[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [filterStatus, setFilterStatus] = useState<TodoStatus | "ALL">("ALL");
@@ -42,6 +56,9 @@ export default function TodoApp() {
       }
       const data = await response.json();
       setTodos(data);
+      
+      // タスク統計を計算して親コンポーネントに通知
+      calculateAndUpdateStatistics(data);
     } catch (error) {
       console.error("Error fetching todos:", error);
       toast({
@@ -52,6 +69,27 @@ export default function TodoApp() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // タスク統計を計算
+  const calculateAndUpdateStatistics = (todos: Todo[]) => {
+    if (!onStatisticsChange) return;
+    
+    const stats: TodoStatistics = {
+      total: todos.length,
+      completed: todos.filter(todo => todo.status === TodoStatus.COMPLETED).length,
+      inProgress: todos.filter(todo => todo.status === TodoStatus.IN_PROGRESS).length,
+      upcoming: todos.filter(todo => {
+        if (!todo.dueDate) return false;
+        const dueDate = new Date(todo.dueDate);
+        const today = new Date();
+        const threeDaysFromNow = addDays(today, 3);
+        return dueDate <= threeDaysFromNow && dueDate >= today && todo.status !== TodoStatus.COMPLETED;
+      }).length,
+      high: todos.filter(todo => todo.priority === TodoPriority.HIGH && todo.status !== TodoStatus.COMPLETED).length,
+    };
+    
+    onStatisticsChange(stats);
   };
 
   // 初回ロード時にタスク一覧を取得
@@ -75,7 +113,10 @@ export default function TodoApp() {
       }
 
       const newTodo = await response.json();
-      setTodos((prev) => [newTodo, ...prev]);
+      const updatedTodos = [newTodo, ...todos];
+      setTodos(updatedTodos);
+      calculateAndUpdateStatistics(updatedTodos);
+      
       toast({
         title: "成功",
         description: "タスクを追加しました。",
@@ -109,9 +150,10 @@ export default function TodoApp() {
       }
 
       const updated = await response.json();
-      setTodos((prev) =>
-        prev.map((todo) => (todo.id === id ? updated : todo))
-      );
+      const updatedTodos = todos.map((todo) => (todo.id === id ? updated : todo));
+      setTodos(updatedTodos);
+      calculateAndUpdateStatistics(updatedTodos);
+      
       toast({
         title: "成功",
         description: "タスクを更新しました。",
@@ -137,7 +179,10 @@ export default function TodoApp() {
         throw new Error("Failed to delete task");
       }
 
-      setTodos((prev) => prev.filter((todo) => todo.id !== id));
+      const updatedTodos = todos.filter((todo) => todo.id !== id);
+      setTodos(updatedTodos);
+      calculateAndUpdateStatistics(updatedTodos);
+      
       toast({
         title: "成功",
         description: "タスクを削除しました。",
@@ -152,52 +197,93 @@ export default function TodoApp() {
     }
   };
 
+  // バリアントに基づいてフィルタリング条件を設定
+  useEffect(() => {
+    if (variant === 'today') {
+      // 今日のタスク
+      setFilterStatus("ALL");
+      setFilterPriority("ALL");
+      setSearchQuery("");
+    } else if (variant === 'important') {
+      // 重要なタスク
+      setFilterPriority(TodoPriority.HIGH);
+      setFilterStatus("ALL");
+      setSearchQuery("");
+    } else {
+      // すべてのタスク
+      setFilterStatus("ALL");
+      setFilterPriority("ALL");
+    }
+  }, [variant]);
+
   // フィルタリングされたタスク一覧
-  const filteredTodos = todos.filter((todo) => {
-    // ステータスでフィルタリング
-    if (filterStatus !== "ALL" && todo.status !== filterStatus) {
-      return false;
+  const getFilteredTodos = () => {
+    let filtered = [...todos];
+    
+    // バリアントに基づくフィルタリング
+    if (variant === 'today') {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      
+      filtered = filtered.filter(todo => {
+        if (!todo.dueDate) return false;
+        const dueDate = new Date(todo.dueDate);
+        dueDate.setHours(0, 0, 0, 0);
+        return dueDate.getTime() === today.getTime() && todo.status !== TodoStatus.COMPLETED;
+      });
+    } else if (variant === 'important') {
+      filtered = filtered.filter(todo => 
+        todo.priority === TodoPriority.HIGH && todo.status !== TodoStatus.COMPLETED
+      );
+    } else {
+      // 通常のフィルタリング
+      if (filterStatus !== "ALL") {
+        filtered = filtered.filter(todo => todo.status === filterStatus);
+      }
+      
+      if (filterPriority !== "ALL") {
+        filtered = filtered.filter(todo => todo.priority === filterPriority);
+      }
+      
+      if (searchQuery) {
+        filtered = filtered.filter(todo => 
+          todo.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          todo.description?.toLowerCase().includes(searchQuery.toLowerCase())
+        );
+      }
     }
+    
+    return filtered;
+  };
 
-    // 優先度でフィルタリング
-    if (filterPriority !== "ALL" && todo.priority !== filterPriority) {
-      return false;
-    }
-
-    // 検索キーワードでフィルタリング
-    if (
-      searchQuery &&
-      !todo.title.toLowerCase().includes(searchQuery.toLowerCase()) &&
-      !todo.description?.toLowerCase().includes(searchQuery.toLowerCase())
-    ) {
-      return false;
-    }
-
-    return true;
-  });
+  const filteredTodos = getFilteredTodos();
 
   return (
     <div className="relative">
-      {/* 検索バーとフィルターボタン */}
-      <div className="flex items-center gap-2 mb-6">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="タスクを検索..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10 h-10 rounded-full"
-          />
+      {/* 通常のバリアントの場合のみ検索バーとフィルターボタンを表示 */}
+      {variant === 'all' && (
+        <div className="flex items-center gap-2 mb-6">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="タスクを検索..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10 h-10 rounded-full"
+            />
+          </div>
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => setIsFilterDialogOpen(true)}
+            className="h-10 w-10 rounded-full"
+          >
+            <FilterIcon className="h-4 w-4" />
+          </Button>
         </div>
-        <Button
-          variant="outline"
-          size="icon"
-          onClick={() => setIsFilterDialogOpen(true)}
-          className="h-10 w-10 rounded-full"
-        >
-          <FilterIcon className="h-4 w-4" />
-        </Button>
-      </div>
+      )}
 
       {/* タスク一覧 */}
       <TodoList
@@ -229,31 +315,33 @@ export default function TodoApp() {
       </Dialog>
 
       {/* フィルターダイアログ */}
-      <Dialog open={isFilterDialogOpen} onOpenChange={setIsFilterDialogOpen}>
-        <DialogContent className="sm:max-w-[500px]">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <FilterIcon className="h-5 w-5 text-primary" />
-              フィルター設定
-            </DialogTitle>
-          </DialogHeader>
-          <TodoFilter
-            filterStatus={filterStatus}
-            filterPriority={filterPriority}
-            searchQuery={searchQuery}
-            onStatusChange={setFilterStatus}
-            onPriorityChange={setFilterPriority}
-            onSearchChange={setSearchQuery}
-            inDialog={true}
-            onReset={() => {
-              setFilterStatus("ALL");
-              setFilterPriority("ALL");
-              setSearchQuery("");
-            }}
-            onClose={() => setIsFilterDialogOpen(false)}
-          />
-        </DialogContent>
-      </Dialog>
+      {variant === 'all' && (
+        <Dialog open={isFilterDialogOpen} onOpenChange={setIsFilterDialogOpen}>
+          <DialogContent className="sm:max-w-[500px]">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <FilterIcon className="h-5 w-5 text-primary" />
+                フィルター設定
+              </DialogTitle>
+            </DialogHeader>
+            <TodoFilter
+              filterStatus={filterStatus}
+              filterPriority={filterPriority}
+              searchQuery={searchQuery}
+              onStatusChange={setFilterStatus}
+              onPriorityChange={setFilterPriority}
+              onSearchChange={setSearchQuery}
+              inDialog={true}
+              onReset={() => {
+                setFilterStatus("ALL");
+                setFilterPriority("ALL");
+                setSearchQuery("");
+              }}
+              onClose={() => setIsFilterDialogOpen(false)}
+            />
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }
