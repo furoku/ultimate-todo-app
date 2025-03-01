@@ -7,9 +7,11 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
+    const id = await params.id;
+    
     const todo = await prisma.todo.findUnique({
       where: {
-        id: params.id,
+        id: id,
       },
       include: {
         category: true,
@@ -37,10 +39,11 @@ export async function PATCH(
 ) {
   try {
     const body = await request.json();
+    const id = await params.id;
 
     const updatedTodo = await prisma.todo.update({
       where: {
-        id: params.id,
+        id: id,
       },
       data: {
         title: body.title,
@@ -79,9 +82,11 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
+    const id = await params.id;
+    
     await prisma.todo.delete({
       where: {
-        id: params.id,
+        id: id,
       },
     });
 

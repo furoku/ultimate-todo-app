@@ -5,7 +5,7 @@ import { CategoryManager } from "@/components/category/category-manager";
 import { ModeToggle } from "@/components/mode-toggle";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { ArrowLeftIcon } from "@radix-ui/react-icons";
+import { ArrowLeft as ArrowLeftIcon } from "lucide-react";
 
 export default function CategoriesPage() {
   return (

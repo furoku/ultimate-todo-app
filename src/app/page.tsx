@@ -2,7 +2,7 @@ import TodoApp from "@/components/todo/todo-app";
 import { ModeToggle } from "@/components/mode-toggle";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { TagIcon } from "@radix-ui/react-icons";
+import { Tag as TagIcon } from "lucide-react";
 
 export default function Home() {
   return (
