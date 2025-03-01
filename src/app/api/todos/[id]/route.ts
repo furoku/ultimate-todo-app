@@ -7,7 +7,7 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    const id = await params.id;
+    const id = params.id;
     
     const todo = await prisma.todo.findUnique({
       where: {
@@ -39,7 +39,7 @@ export async function PATCH(
 ) {
   try {
     const body = await request.json();
-    const id = await params.id;
+    const id = params.id;
 
     const updatedTodo = await prisma.todo.update({
       where: {
@@ -82,7 +82,7 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    const id = await params.id;
+    const id = params.id;
     
     await prisma.todo.delete({
       where: {

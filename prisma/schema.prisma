@@ -14,8 +14,8 @@ model Todo {
   id          String       @id @default(uuid())
   title       String
   description String?
-  status      TodoStatus   @default(TODO)
-  priority    TodoPriority @default(MEDIUM)
+  status      String       @default("TODO")
+  priority    String       @default("MEDIUM")
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
   dueDate     DateTime?
@@ -35,16 +35,4 @@ model Category {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   todos     Todo[]
-}
-
-enum TodoStatus {
-  TODO
-  IN_PROGRESS
-  COMPLETED
-}
-
-enum TodoPriority {
-  LOW
-  MEDIUM
-  HIGH
 }
