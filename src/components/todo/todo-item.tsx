@@ -8,12 +8,12 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { TodoEditDialog } from "@/components/todo/todo-edit-dialog";
 import { 
-  Calendar, 
+  Calendar,
   CalendarDays, 
   CheckCircle, 
   Clock, 
   Pencil, 
-  Trash2 
+  Trash2
 } from "lucide-react";
 import {
   AlertDialog,
@@ -26,6 +26,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { cn } from "@/lib/utils";
 
 interface TodoItemProps {
   todo: Todo;
@@ -36,55 +37,67 @@ interface TodoItemProps {
 export function TodoItem({ todo, onUpdate, onDelete }: TodoItemProps) {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
-  // ステータスに応じてバッジの色とテキストを設定
+  // ステータスに応じてバッジの色とアイコンを設定
   const getStatusBadge = (status: TodoStatus) => {
     switch (status) {
       case TodoStatus.TODO:
-        return (
-          <Badge variant="outline" className="flex items-center gap-1 bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-400 rounded-full px-3 shadow-sm">
-            <Clock className="h-3 w-3" /> 未着手
-          </Badge>
-        );
+        return {
+          color: "text-blue-600 dark:text-blue-400",
+          bg: "bg-blue-50 dark:bg-blue-950/50",
+          icon: <Clock className="h-3 w-3 mr-1" />,
+          text: "未着手"
+        };
       case TodoStatus.IN_PROGRESS:
-        return (
-          <Badge variant="outline" className="flex items-center gap-1 bg-yellow-50 text-yellow-700 dark:bg-yellow-950 dark:text-yellow-400 rounded-full px-3 shadow-sm">
-            <Clock className="h-3 w-3" /> 進行中
-          </Badge>
-        );
+        return {
+          color: "text-amber-600 dark:text-amber-400",
+          bg: "bg-amber-50 dark:bg-amber-950/50",
+          icon: <Clock className="h-3 w-3 mr-1" />,
+          text: "進行中"
+        };
       case TodoStatus.COMPLETED:
-        return (
-          <Badge variant="outline" className="flex items-center gap-1 bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-400 rounded-full px-3 shadow-sm">
-            <CheckCircle className="h-3 w-3" /> 完了
-          </Badge>
-        );
+        return {
+          color: "text-green-600 dark:text-green-400",
+          bg: "bg-green-50 dark:bg-green-950/50",
+          icon: <CheckCircle className="h-3 w-3 mr-1" />,
+          text: "完了"
+        };
       default:
-        return null;
+        return {
+          color: "text-gray-600 dark:text-gray-400",
+          bg: "bg-gray-50 dark:bg-gray-950/50",
+          icon: null,
+          text: ""
+        };
     }
   };
 
-  // 優先度に応じてバッジの色とテキストを設定
+  // 優先度に応じてバッジの色を設定
   const getPriorityBadge = (priority: TodoPriority) => {
     switch (priority) {
-      case TodoPriority.LOW:
-        return (
-          <Badge variant="outline" className="bg-slate-50 text-slate-700 dark:bg-slate-900 dark:text-slate-400 rounded-full px-3 shadow-sm">
-            低
-          </Badge>
-        );
-      case TodoPriority.MEDIUM:
-        return (
-          <Badge variant="outline" className="bg-orange-50 text-orange-700 dark:bg-orange-950 dark:text-orange-400 rounded-full px-3 shadow-sm">
-            中
-          </Badge>
-        );
       case TodoPriority.HIGH:
-        return (
-          <Badge variant="outline" className="bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-400 rounded-full px-3 shadow-sm">
-            高
-          </Badge>
-        );
+        return {
+          text: "高",
+          bg: "bg-red-50 dark:bg-red-950/50",
+          color: "text-red-600 dark:text-red-400"
+        };
+      case TodoPriority.MEDIUM:
+        return {
+          text: "中",
+          bg: "bg-orange-50 dark:bg-orange-950/50",
+          color: "text-orange-600 dark:text-orange-400"
+        };
+      case TodoPriority.LOW:
+        return {
+          text: "低",
+          bg: "bg-slate-50 dark:bg-slate-900/50",
+          color: "text-slate-600 dark:text-slate-400"
+        };
       default:
-        return null;
+        return {
+          text: "",
+          bg: "bg-gray-50 dark:bg-gray-900/50",
+          color: "text-gray-600 dark:text-gray-400"
+        };
     }
   };
 
@@ -97,39 +110,41 @@ export function TodoItem({ todo, onUpdate, onDelete }: TodoItemProps) {
     onUpdate(todo.id, { status: newStatus });
   };
 
+  const statusBadge = getStatusBadge(todo.status);
+  const priorityBadge = getPriorityBadge(todo.priority);
+
   return (
-    <div className="flex items-start gap-3 p-4 border-0 rounded-xl bg-card/60 hover:bg-card/90 hover:shadow-md transition-all duration-200 backdrop-blur-sm">
-      <div className="mt-1">
-        <Checkbox
-          id={`todo-${todo.id}`}
-          checked={todo.status === TodoStatus.COMPLETED}
-          onCheckedChange={handleStatusChange}
-          className="h-5 w-5 rounded-full border-2 data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground"
-        />
-      </div>
-      <div className="flex-1 space-y-1">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+    <div className="flex items-start gap-3 p-4 hover:bg-muted/10 transition-colors">
+      <Checkbox
+        id={`todo-${todo.id}`}
+        checked={todo.status === TodoStatus.COMPLETED}
+        onCheckedChange={handleStatusChange}
+        className="h-5 w-5 mt-0.5 rounded-sm border-2"
+      />
+      <div className="flex-1 min-w-0">
+        <div className="flex flex-col sm:flex-row sm:items-center">
           <label
             htmlFor={`todo-${todo.id}`}
-            className={`font-medium cursor-pointer text-lg ${
-              todo.status === TodoStatus.COMPLETED
-                ? "line-through text-muted-foreground"
-                : ""
-            }`}
+            className={cn(
+              "font-medium text-base cursor-pointer pr-4",
+              todo.status === TodoStatus.COMPLETED ? "line-through text-muted-foreground" : ""
+            )}
           >
             {todo.title}
           </label>
-          <div className="flex flex-wrap gap-1.5">
-            {getPriorityBadge(todo.priority)}
-            {getStatusBadge(todo.status)}
+          <div className="flex flex-wrap gap-1.5 mt-1 sm:mt-0">
+            <Badge className={cn("text-xs font-medium rounded-full px-2 py-0.5", priorityBadge.bg, priorityBadge.color)}>
+              {priorityBadge.text}
+            </Badge>
+            <Badge className={cn("text-xs font-medium rounded-full px-2 py-0.5 flex items-center", statusBadge.bg, statusBadge.color)}>
+              {statusBadge.icon} {statusBadge.text}
+            </Badge>
             {todo.category && (
-              <Badge
-                variant="outline"
-                className="rounded-full px-3 shadow-sm"
+              <Badge 
+                className="text-xs font-medium rounded-full px-2 py-0.5"
                 style={{ 
                   backgroundColor: `${todo.category.color}20`,
-                  color: todo.category.color,
-                  borderColor: `${todo.category.color}30`
+                  color: todo.category.color
                 }}
               >
                 {todo.category.name}
@@ -137,32 +152,36 @@ export function TodoItem({ todo, onUpdate, onDelete }: TodoItemProps) {
             )}
           </div>
         </div>
+        
         {todo.description && (
-          <p className={`text-sm text-muted-foreground mt-2 ${
+          <p className={cn(
+            "text-sm text-muted-foreground mt-1",
             todo.status === TodoStatus.COMPLETED ? "line-through" : ""
-          }`}>
+          )}>
             {todo.description}
           </p>
         )}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mt-3 gap-2">
-          <div className="flex flex-wrap items-center text-xs text-muted-foreground gap-3">
+        
+        <div className="flex items-center justify-between mt-2 text-muted-foreground text-xs">
+          <div className="flex flex-wrap gap-3">
             {todo.dueDate && (
               <div className="flex items-center">
                 <CalendarDays className="mr-1 h-3 w-3" />
                 <span>期限: {format(new Date(todo.dueDate), "yyyy/MM/dd")}</span>
               </div>
             )}
-            <span className="flex items-center">
+            <div className="flex items-center">
               <Calendar className="mr-1 h-3 w-3" />
-              作成: {format(new Date(todo.createdAt), "yyyy/MM/dd")}
-            </span>
+              <span>作成: {format(new Date(todo.createdAt), "yyyy/MM/dd")}</span>
+            </div>
           </div>
-          <div className="flex gap-2">
+          
+          <div className="flex">
             <Button
               variant="ghost"
-              size="sm"
+              size="icon"
               onClick={() => setIsEditDialogOpen(true)}
-              className="h-8 w-8 p-0 rounded-full hover:bg-primary/10 hover:text-primary transition-colors"
+              className="h-8 w-8"
             >
               <Pencil className="h-4 w-4" />
             </Button>
@@ -170,13 +189,13 @@ export function TodoItem({ todo, onUpdate, onDelete }: TodoItemProps) {
               <AlertDialogTrigger asChild>
                 <Button
                   variant="ghost"
-                  size="sm"
-                  className="h-8 w-8 p-0 rounded-full hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
+                  size="icon"
+                  className="h-8 w-8"
                 >
                   <Trash2 className="h-4 w-4" />
                 </Button>
               </AlertDialogTrigger>
-              <AlertDialogContent className="rounded-lg">
+              <AlertDialogContent>
                 <AlertDialogHeader>
                   <AlertDialogTitle>タスクの削除</AlertDialogTitle>
                   <AlertDialogDescription>
@@ -197,6 +216,7 @@ export function TodoItem({ todo, onUpdate, onDelete }: TodoItemProps) {
           </div>
         </div>
       </div>
+      
       {/* 編集ダイアログ */}
       <TodoEditDialog
         todo={todo}
