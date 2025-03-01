@@ -7,7 +7,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { CheckCircle, Tag as TagIcon, BarChart3, Clock, CalendarClock, ListTodo } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/custom-tabs";
 
 export default function Home() {
   const [statistics, setStatistics] = useState<TodoStatistics>({
