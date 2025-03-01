@@ -20,7 +20,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { format } from "date-fns";
-import { CalendarIcon, PlusCircledIcon } from "@radix-ui/react-icons";
+import { Calendar as CalendarIcon, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -83,45 +83,50 @@ export function TodoForm({ onSubmit }: TodoFormProps) {
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>新しいタスクを追加</CardTitle>
+    <Card className="border-none shadow-lg rounded-xl overflow-hidden backdrop-blur-sm bg-background/70 dark:bg-background/50">
+      <CardHeader className="bg-gradient-to-r from-primary/10 to-purple-500/10 dark:from-primary/20 dark:to-blue-500/20 border-b border-primary/10">
+        <CardTitle className="flex items-center gap-2 text-primary dark:text-primary/90">
+          <Plus className="h-5 w-5" />
+          新しいタスクを追加
+        </CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="pt-6">
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid gap-2">
-            <Label htmlFor="title">タイトル</Label>
+            <Label htmlFor="title" className="font-medium text-foreground/80">タイトル</Label>
             <Input
               id="title"
               placeholder="タスクのタイトル"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               required
+              className="rounded-lg"
             />
           </div>
 
           <div className="grid gap-2">
-            <Label htmlFor="description">説明</Label>
+            <Label htmlFor="description" className="font-medium text-foreground/80">説明</Label>
             <Textarea
               id="description"
               placeholder="タスクの詳細"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={3}
+              className="rounded-lg"
             />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="grid gap-2">
-              <Label htmlFor="status">ステータス</Label>
+              <Label htmlFor="status" className="font-medium text-foreground/80">ステータス</Label>
               <Select
                 value={status}
                 onValueChange={(value) => setStatus(value as TodoStatus)}
               >
-                <SelectTrigger id="status">
+                <SelectTrigger id="status" className="rounded-lg">
                   <SelectValue placeholder="ステータスを選択" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="rounded-lg">
                   <SelectItem value={TodoStatus.TODO}>未着手</SelectItem>
                   <SelectItem value={TodoStatus.IN_PROGRESS}>進行中</SelectItem>
                   <SelectItem value={TodoStatus.COMPLETED}>完了</SelectItem>
@@ -130,15 +135,15 @@ export function TodoForm({ onSubmit }: TodoFormProps) {
             </div>
 
             <div className="grid gap-2">
-              <Label htmlFor="priority">優先度</Label>
+              <Label htmlFor="priority" className="font-medium text-foreground/80">優先度</Label>
               <Select
                 value={priority}
                 onValueChange={(value) => setPriority(value as TodoPriority)}
               >
-                <SelectTrigger id="priority">
+                <SelectTrigger id="priority" className="rounded-lg">
                   <SelectValue placeholder="優先度を選択" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="rounded-lg">
                   <SelectItem value={TodoPriority.LOW}>低</SelectItem>
                   <SelectItem value={TodoPriority.MEDIUM}>中</SelectItem>
                   <SelectItem value={TodoPriority.HIGH}>高</SelectItem>
@@ -147,14 +152,14 @@ export function TodoForm({ onSubmit }: TodoFormProps) {
             </div>
 
             <div className="grid gap-2">
-              <Label htmlFor="dueDate">期限日</Label>
+              <Label htmlFor="dueDate" className="font-medium text-foreground/80">期限日</Label>
               <Popover>
                 <PopoverTrigger asChild>
                   <Button
                     variant="outline"
                     id="dueDate"
                     className={cn(
-                      "w-full justify-start text-left font-normal",
+                      "w-full justify-start text-left font-normal rounded-lg",
                       !dueDate && "text-muted-foreground"
                     )}
                   >
@@ -162,28 +167,29 @@ export function TodoForm({ onSubmit }: TodoFormProps) {
                     {dueDate ? format(dueDate, "yyyy/MM/dd") : "期限日を選択"}
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
+                <PopoverContent className="w-auto p-0 rounded-lg shadow-lg">
                   <Calendar
                     mode="single"
                     selected={dueDate}
                     onSelect={setDueDate}
                     initialFocus
+                    className="rounded-lg"
                   />
                 </PopoverContent>
               </Popover>
             </div>
 
             <div className="grid gap-2">
-              <Label htmlFor="category">カテゴリ</Label>
+              <Label htmlFor="category" className="font-medium text-foreground/80">カテゴリ</Label>
               <Select
-                value={categoryId || ""}
-                onValueChange={(value) => setCategoryId(value || undefined)}
+                value={categoryId || "none"}
+                onValueChange={(value) => setCategoryId(value === "none" ? undefined : value)}
               >
-                <SelectTrigger id="category">
+                <SelectTrigger id="category" className="rounded-lg">
                   <SelectValue placeholder="カテゴリを選択" />
                 </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="">カテゴリなし</SelectItem>
+                <SelectContent className="rounded-lg">
+                  <SelectItem value="none">カテゴリなし</SelectItem>
                   {categories.map((category) => (
                     <SelectItem key={category.id} value={category.id}>
                       <div className="flex items-center">
@@ -201,8 +207,12 @@ export function TodoForm({ onSubmit }: TodoFormProps) {
           </div>
 
           <div className="flex justify-end">
-            <Button type="submit" disabled={isLoading || !title.trim()}>
-              <PlusCircledIcon className="mr-2 h-4 w-4" />
+            <Button 
+              type="submit" 
+              disabled={isLoading || !title.trim()}
+              className="rounded-full shadow-md hover:shadow-lg transition-all duration-200 bg-gradient-to-r from-primary to-purple-600 dark:from-primary dark:to-blue-600 hover:scale-105"
+            >
+              <Plus className="mr-2 h-4 w-4" />
               {isLoading ? "追加中..." : "タスクを追加"}
             </Button>
           </div>
